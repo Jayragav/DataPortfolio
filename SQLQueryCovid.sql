@@ -29,16 +29,9 @@ ORDER BY 1,2
 --Total cases Vs Population and finding what percentage of the population has Covid in our country
 SELECT location,date,population,total_cases,(total_cases/population)*100 AS percentage_covid
 FROM Portfolioproject.dbo.CoviddeathsClean$
-Where location LIKE '%states%' AND continent IS NOT NULL
+--Where location LIKE '%states%' AND continent IS NOT NULL
 ORDER BY 1,2
 
---Finding out the highest Covid infection rate Countrywise
-SELECT location,population,MAX(total_cases) AS highest_covidcases,MAX((total_cases/population))*100 AS highest_percentage_covid
-FROM Portfolioproject.dbo.CoviddeathsClean$
---Where location LIKE '%states%'
- WHERE continent IS NOT NULL
-GROUP BY location,population
-ORDER BY highest_percentage_covid desc
 
 --Finding the highest number of deaths countrywise due to Covid
 SELECT location,MAX(CAST(total_deaths AS INT)) AS highest_coviddeaths,MAX((total_deaths/population))*100 AS highest_percentage_coviddeath
@@ -56,12 +49,6 @@ FROM Portfolioproject.dbo.CoviddeathsClean$
 GROUP BY continent
 ORDER BY highest_percentage_coviddeath desc
 
---Latest Covid cases and deaths due to it.
-SELECT SUM(new_cases) AS latest_cases, SUM(CAST(new_deaths AS INT)) AS latest_deaths, SUM(CAST(new_deaths AS INT))/SUM(new_cases)*100 AS latest_deathpercentage
-FROM Portfolioproject.dbo.CoviddeathsClean$
-WHERE continent IS NOT NULL
---GROUP BY date
-ORDER BY 1,2
 
 SELECT Codeath.continent,Codeath.location,Codeath.date,Codeath.population,Covacc.new_vaccinations,SUM(CAST(new_vaccinations as INT))
 OVER(PARTITION BY Codeath.location ORDER BY Codeath.location,Codeath.date) AS rolling_totalVacc
@@ -134,3 +121,35 @@ WHERE Codeath.continent IS NOT NULL
 SELECT * FROM Percentpopvaccview
 
 SELECT * FROM Covideathconview
+
+-- Queries Used in Tableau Visualisation
+-- 1.Latest Covid cases and deaths due to it.
+SELECT SUM(new_cases) AS latest_cases, SUM(CAST(new_deaths AS INT)) AS latest_deaths, SUM(CAST(new_deaths AS INT))/SUM(new_cases)*100 AS latest_deathpercentage
+FROM Portfolioproject.dbo.CoviddeathsClean$
+WHERE continent IS NOT NULL
+--GROUP BY date
+ORDER BY 1,2
+
+-- 2.Taking these records out as they are not included in the above query
+SELECT location,SUM(CAST(new_deaths AS INT)) AS latest_deaths
+FROM Portfolioproject.dbo.CoviddeathsClean$
+WHERE continent IS NULL
+AND location NOT IN ('International','European Union','World')
+GROUP BY location
+ORDER BY latest_deaths DESC
+
+-- 3.Finding out the highest Covid infection rate Countrywise
+SELECT location,population,MAX(total_cases) AS highest_covidcases,MAX((total_cases/population))*100 AS highest_percentage_covid
+FROM Portfolioproject.dbo.CoviddeathsClean$
+--Where location LIKE '%states%'
+ WHERE continent IS NOT NULL
+GROUP BY location,population
+ORDER BY highest_percentage_covid desc
+
+--4.Finding out the highest Covid infection rate Countrywise and datewise
+SELECT location,population,date,MAX(total_cases) AS highest_covidcases,MAX((total_cases/population))*100 AS highest_percentage_covid
+FROM Portfolioproject.dbo.CoviddeathsClean$
+--Where location LIKE '%states%'
+ WHERE continent IS NOT NULL
+GROUP BY location,population,date
+ORDER BY highest_percentage_covid desc
